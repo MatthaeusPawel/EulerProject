@@ -1,0 +1,591 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Euler Project 54</title>
+</head>
+  <script src="../Library/PixiJS/pixi.js"></script>
+<body>
+  <script type="text/javascript">
+    let type = "WebGL"
+    if(!PIXI.utils.isWebGLSupported()){
+      type = "canvas"
+    }
+
+      const URLOwnServer = "http://127.0.0.1:8080";
+
+      function getValue(valuename){
+        switch(valuename){
+          case "A":
+            return 14;
+          case "K":
+            return 13;
+          case "Q":
+            return 12;
+          case "J":
+            return 11;
+          case "T":
+            return 10;
+        }
+        return parseInt(valuename);
+      };
+
+      function getValuename(value){
+
+        if (value >= 10)
+          for (valuename in ["A", "K", "Q", "J", "T"])
+            if (getValue(valuename) == value)
+              return valuename;
+
+        return value.toString();
+
+
+      }
+
+      function Cards(_cardname, texture=undefined) {
+        card = {}
+        let len = _cardname.lenghth;
+         card.cardname = _cardname;
+         if (_cardname[0]=="T") 
+           card.cardnameT = "10" + _cardname[1]
+         else card.cardnameT = _cardname;
+         card.valuename = _cardname[0]
+         card.color = _cardname[1]
+         card.value = getValue(_cardname[0]);
+
+        return card;
+        };
+      
+      function mapHandsToValues(handNames){
+        switch(handNames){
+          case "Royal Flush":
+            return 14;
+          case "Straight Flush":
+            return 13;
+          case "Four of a Kind":
+            return 12;
+          case "Full House":
+            return 11;
+          case "Flush":
+            return 10;
+          case "Straight":
+            return 9;
+          case "Three of a Kind":
+            return 8;
+          case "Two Pairs":
+            return 7;
+          case "One Pair":
+            return 6;
+          case "High Card":
+            return 5;
+        }
+      }
+
+    const equals = (a,b) => 
+      a.length === b.length &&
+      a.every((v, i) => v === b[i])
+
+      function mapValuesToHands(value){
+        for (rank of ["Royal Flush", "Straight Flush", "Four of a Kind", "Full House", "Flush", "Straight", "Three of a Kind", "Two Pairs", "One Pair", "High Card"])
+          if (mapHandsToValues(rank) == value)
+            return rank;
+      }
+
+      function evaluateHand(_hand){
+        let resultHand = []
+        let handValues = _hand.map(card => card.value)
+
+        let highestValue = Math.max(...handValues);
+        let lowestValue = Math.min(...handValues);
+        let remainingCards;
+        let cardOrder;
+        let handDecomposition = [];
+
+        if ([...new Set(_hand.map(card => card.color))].length == 1){
+
+          cardOrder = handDecomposition.map(y => y.value).sort( (x,y) => y-x)
+          resultHand.push({rank:'Flush', value: cardOrder});
+        }
+
+        if (highestValue - lowestValue == _hand.length - 1 && [... new Set(handValues)].length === 5 ) 
+          resultHand.push({rank:'Straight', value: [highestValue]});
+
+        valuesInHand = [... new Set(handValues)].map(uniquevalue => handValues.filter(value => value==uniquevalue))
+        for (x of valuesInHand){
+          handDecomposition.push( {value: x[0], count: x.length})
+        }
+
+        valueDistribution = [... new Set(handValues)].map(uniquevalue => handValues.filter(value => value==uniquevalue).length).sort((x,y)=> x-y)
+
+        if (equals(valueDistribution, [1,4])){
+          cardOrder = [handDecomposition.filter(y => y.count == 4)[0].value, handDecomposition.filter(y => y.count == 1)[0].value]
+          resultHand.push({rank:'Four of a Kind', value: cardOrder});
+        }
+
+        if (equals(valueDistribution, [2,3])){
+          cardOrder = [handDecomposition.filter(y => y.count == 3)[0].value, handDecomposition.filter(y => y.count == 2)[0].value]
+
+          resultHand.push({rank:'Full House', value: cardOrder});
+        }          
+
+        if (equals(valueDistribution, [1,2,2])){
+          let fstPairValue = handDecomposition.filter(y => y.count == 2)[0].value
+          let sndPairValue = handDecomposition.filter(y => y.count == 2)[1].value
+
+          cardOrder = [ Math.max(fstPairValue, sndPairValue), Math.min(fstPairValue, sndPairValue), handDecomposition.filter(y => y.count == 1)[0].value ]
+          resultHand.push({rank:'Two Pairs', value: cardOrder});
+
+        }
+        
+
+        if (equals(valueDistribution, [1,1,3])){
+          let fstPairValue = handDecomposition.filter(y => y.count == 1)[0].value
+          let sndPairValue = handDecomposition.filter(y => y.count == 1)[1].value
+
+          cardOrder = [handDecomposition.filter(y => y.count == 3)[0].value, Math.max(fstPairValue, sndPairValue), Math.min(fstPairValue, sndPairValue)]
+          resultHand.push({rank:'Three of a Kind', value: cardOrder})
+        }
+        
+        if (equals(valueDistribution, [1,1,1,2]) ){
+          let fstPairValue = handDecomposition.filter(y => y.count == 1)[0].value
+          let sndPairValue = handDecomposition.filter(y => y.count == 1)[1].value
+          let thrdPairValue = handDecomposition.filter(y => y.count == 1)[2].value
+
+          let midValue = fstPairValue + sndPairValue + thrdPairValue - Math.max(fstPairValue, sndPairValue, thrdPairValue)- Math.min(fstPairValue, sndPairValue, thrdPairValue)
+
+          cardOrder = [handDecomposition.filter(y => y.count == 2)[0].value, Math.max(fstPairValue, sndPairValue, thrdPairValue), midValue, Math.min(fstPairValue, sndPairValue, thrdPairValue)]
+          resultHand.push({rank: 'One Pair', value: cardOrder})
+        }
+
+        if (resultHand.map(y => y.rank).includes("Flush") && resultHand.map(y => y.rank).includes("Straight"))
+          resultHand.push({rank:'Straight Flush', value: [highestValue]});
+
+        if (resultHand.map(y => y.rank).includes('Straight Flush') && highestValue == 14)
+            resultHand.push({rank: 'Royal Flush', value: []});
+
+        cardOrder = handDecomposition.map(y => y.value).sort( (x,y) => y-x)
+
+        resultHand.push({rank: 'High Card', value: cardOrder})
+
+        return resultHand;
+      }
+
+      let handsTop = [];
+      let handsBottom= [];
+
+    function processProblem(text){
+      lines = text.split(/\r?\n/);
+
+      let cardnames =" ";
+      for (line in lines){
+        cardnames = lines[line].split(" ");
+        let mapNameToCard = cardnames.map(x => Cards(x));
+
+        handsBottom.push(mapNameToCard.slice(0,5));
+        handsTop.push(mapNameToCard.slice(-5));
+      }
+      
+    };
+
+    let canvasHeight = 1280;
+    let cardBoardWidth = 1600;
+    let scoreBoardWidth =900;
+
+
+    let app = new PIXI.Application({
+      width: cardBoardWidth + scoreBoardWidth,
+      height: canvasHeight,
+      antialias: true,
+      resolution: 1
+    });
+
+    let scoreBoard = new PIXI.Container();    
+    let cardBoard = new PIXI.Container();    
+    
+    cardBoard.x = 0;
+    cardBoard.y = 0;
+    cardBoard.height = canvasHeight;
+    cardBoard.Width = cardBoardWidth;
+
+    scoreBoard.x = cardBoardWidth;
+    scoreBoard.y = 0;
+    scoreBoard.height = canvasHeight;
+    scoreBoard.Width = scoreBoardWidth;
+
+    app.stage.addChild(cardBoard);
+    app.stage.addChild(scoreBoard);
+
+    document.body.appendChild(app.view);
+
+    let style = new PIXI.TextStyle({
+      fontSize: 72,
+      fill: "white"
+    });
+
+    let loader = PIXI.Loader.shared
+
+    let mySign = 1;
+    let PositionDelta = 1;
+    let WidthDelta = [2,2,2,2,2];
+    let cards = {}
+    let singleCard =" "
+    let valueArray = ["2","3","4","5","6","7","8","9","T", "J", "Q", "K", "A"];
+    let colorArray = ["H", "D", "C", "S"]
+    let cardWidth = 0;
+    let cardHeight = 0;
+    let cardsSpritesheet;
+
+    let problemfilepromise = fetch(URLOwnServer+"/project54/p054_poker.txt")
+      .then (response => response.text())
+      .then (text => processProblem(text));
+
+    Promise.all([problemfilepromise]).then(()=>loader.add(URLOwnServer+"/project54/cards.json").load(mainSetup))
+
+    cardsBottom = [];
+    cardsTop = [];
+    
+    let startPos = 0;
+    position = startPos;
+    positionChange = 0;
+
+    animationChangeBottom = [0,0,0,0,0];
+    animationChangeTop = [0,0,0,0,0];
+
+    makeSmallerBottom = [0,0,0,0,0];
+    makeBiggerBottom = [0,0,0,0,0];
+
+    makeSmallerTop = [0,0,0,0,0];
+    makeBiggerTop = [0,0,0,0,0];
+
+    fancySwap = 0;
+
+
+    function mainSetup() {
+
+
+      let up = keyboard("ArrowUp");
+      let down = keyboard("ArrowDown");
+
+      let left = keyboard("ArrowLeft");
+      let right = keyboard("ArrowRight");
+
+      up.press = () => { positionChange = 1;}
+      down.press = () => { positionChange = -1;}
+
+      left.press = () => { animationChangeBottom[0]=1; animationChangeTop[4]=1; makeSmallerBottom=makeSmallerBottom.map(x=>1); makeSmallerTop = makeSmallerTop.map(x=>1) ; positionChange = -1;}
+      right.press = () => { animationChangeBottom[0]=1; animationChangeTop[4]=1; makeSmallerBottom=makeSmallerBottom.map(x=>1); makeSmallerTop = makeSmallerTop.map(x=>1) ; positionChange = +1;}
+
+      cardsSpritesheet = loader.resources[URLOwnServer+"/project54/cards.json"].spritesheet;
+
+      backTexture = cardsSpritesheet.textures["gray_back.png"]
+      for (let i = 0; i < 5; ++i){
+        scaleFactor =  0.4
+
+        cardsBottom.push(new PIXI.Sprite(backTexture));
+
+        cardsBottom[i].width *= scaleFactor;
+        cardsBottom[i].height *= scaleFactor;
+
+        cardWidth = cardsBottom[i].width;
+        cardHeight = cardsBottom[i].height;
+
+
+        cardsBottom[i].x = cardsBottom[i].width/2 + i * cardBoardWidth / 5;
+        cardsBottom[i].y = canvasHeight - cardsBottom[i].height - 10;
+
+
+        cardsTop.push(new PIXI.Sprite(backTexture));
+
+        cardsTop[i].width *= scaleFactor;
+        cardsTop[i].height *= scaleFactor;
+
+        cardWidth = cardsTop[i].width;
+        cardHeight = cardsTop[i].height;
+
+
+        cardsTop[i].x = cardsTop[i].width/2 + i * cardBoardWidth / 5;
+        cardsTop[i].y = cardsTop[i].height - 10;
+
+        cardsBottom[i].anchor.set(0.5,0.5);
+        cardsTop[i].anchor.set(0.5,0.5);
+
+        cardsBottom[i].texture = cardsSpritesheet.textures[handsBottom[startPos][i].cardnameT+".png"];
+        cardsTop[i].texture = cardsSpritesheet.textures[handsTop[startPos][i].cardnameT+".png"];
+
+        cardBoard.addChild(cardsBottom[i]);
+        cardBoard.addChild(cardsTop[i]);
+      }
+
+      solve()
+
+      position = startPos;
+      app.ticker.add(delta => gameLoop(delta));
+
+      scoreSetup();
+    };
+    let topText;
+    let winnerA;
+    let bottomText;
+
+    function scoreSetup(){
+      topText = new PIXI.Text('', {fontFamily : 'Arial', fontSize: 24, fill :0xFFFFFF, align: 'left'});
+      bottomText = new PIXI.Text('', {fontFamily : 'Arial', fontSize: 24, fill :0xFFFFFF, align: 'left'});
+      winnerA = new PIXI.Text('', {fontFamily : 'Arial', fontSize: 36, fill :0xFFFFFF, align: 'left'});
+
+      topText.x = 20;
+      topText.y = 200;
+
+      bottomText.x = 20;
+      bottomText.y = 650;
+
+      winnerA.x = 500;
+      winnerA.y = 100;
+
+      scoreBoard.addChild(topText);
+      scoreBoard.addChild(bottomText);
+      cardBoard.addChild(winnerA); 
+    }
+
+    let animationFinishedBottom = [1,1,1,1,1];
+    let animationFinishedTop = [1,1,1,1,1];
+
+
+    function singleEval(_handBottom, _handTop){
+
+        bottomHandEval = evaluateHand(_handBottom)
+        bottomHandRank = bottomHandEval.map(x=>mapHandsToValues(x.rank))
+        bottomHandRankMax = Math.max(... bottomHandEval.map(x=>mapHandsToValues(x.rank)))
+
+        bottomHandValuesToCheck = bottomHandEval.filter(y => mapHandsToValues(y.rank) == bottomHandRankMax)[0].value
+
+
+        topHandEval = evaluateHand(_handTop)
+        topHandRank = topHandEval.map(x=>mapHandsToValues(x.rank))
+        topHandRankMax = Math.max(... topHandEval.map(x=>mapHandsToValues(x.rank)))
+
+        topHandValuesToCheck = topHandEval.filter(y => mapHandsToValues(y.rank) == topHandRankMax)[0].value
+
+        if (bottomHandRankMax > topHandRankMax)
+          return "bottomWins";
+
+        if (bottomHandRankMax < topHandRankMax)
+          return "topWins";
+
+        if (bottomHandRankMax == topHandRankMax){
+          for (i in bottomHandValuesToCheck){
+            if (bottomHandValuesToCheck[i] > topHandValuesToCheck[i]) 
+              return "bottomWins";
+            if (bottomHandValuesToCheck[i] < topHandValuesToCheck[i])
+              return "topWins";
+
+          }
+        }
+
+        return "draw";
+    }
+
+    function solve(){
+      let topWins = 0;
+      let bottomWins = 0;
+      let draw = 0
+      for (position in handsBottom){
+        switch (singleEval(handsBottom[position], handsTop[position])){
+          case "bottomWins": bottomWins++; break;
+          case "topWins": topWins++; break;
+          case "draw": draw++; break;
+        }
+      }
+
+      console.log("Player 1 Wins: " + bottomWins);
+      console.log("Player 2 Wins: " + topWins);
+      console.log("Draws = " + draw);
+
+    }
+
+
+
+    function gameLoop(delta) {
+      let scaledDelta = 20*delta
+        if (positionChange != 0 && animationFinishedBottom.reduce((a,b)=> a+b, 0)+ animationFinishedTop.reduce((a,b)=> a+b, 0) === 10 ){
+          position += positionChange;
+          position = Math.max(0, position);
+          position = Math.min(999, position);
+
+          positionChange = 0;
+
+          bottomHandEval = evaluateHand(handsBottom[position])
+          bottomHandRank = bottomHandEval.map(x=>mapHandsToValues(x.rank))
+          bottomHandRankMax = Math.max(... bottomHandEval.map(x=>mapHandsToValues(x.rank)))
+
+          bottomHandValuesToCheck = bottomHandEval.filter(y => mapHandsToValues(y.rank) == bottomHandRankMax)[0].value
+
+          bottomText.text = mapValuesToHands(bottomHandRankMax)+ ", values " + bottomHandValuesToCheck.join(", ")
+
+
+          topHandEval = evaluateHand(handsTop[position])
+          topHandRank = topHandEval.map(x=>mapHandsToValues(x.rank))
+          topHandRankMax = Math.max(... topHandEval.map(x=>mapHandsToValues(x.rank)))
+
+          topHandValuesToCheck = topHandEval.filter(y => mapHandsToValues(y.rank) == topHandRankMax)[0].value
+
+          topText.text = mapValuesToHands(topHandRankMax) + ", values " + topHandValuesToCheck.join(", ")
+          winnerA.text = singleEval(handsBottom[position], handsTop[position]);
+          
+        }
+      
+        for (card in cardsBottom)
+          if (makeSmallerBottom[card] == 1 && makeBiggerBottom[card] == 1)
+            makeSmallerBottom[card] = 0;
+
+        for (card in cardsBottom)
+        { 
+          if (animationChangeBottom[card] != 0)
+          {
+            if (makeSmallerBottom[card] == 1)
+            {
+              if (cardsBottom[card].width < cardWidth/2 && card < 4 && animationChangeBottom[card] == 1)
+                animationChangeBottom[parseInt(card)+1] =1;
+              if (cardsBottom[card].width > 2+scaledDelta)
+                cardsBottom[card].width -= scaledDelta
+              else 
+              {
+                makeSmallerBottom[card] = 0;
+                makeBiggerBottom[card] = 1;
+                if (animationChangeBottom[card] == 1 && fancySwap == 1)
+                  cardsBottom[card].texture = backTexture;
+                else
+                  cardsBottom[card].texture = cardsSpritesheet.textures[handsBottom[position][card].cardnameT+".png"];
+              }
+            }
+            if (makeBiggerBottom[card] == 1)
+            {
+              if (cardsBottom[card].width < cardWidth)
+                cardsBottom[card].width += scaledDelta;
+              else 
+              {
+                makeBiggerBottom[card] = 0;
+                if (animationChangeBottom[card] == -1) 
+                  animationChangeBottom[card] = 0;
+                
+                if (animationChangeBottom[card] == 1) 
+                {
+                  if (fancySwap == 1)
+                  {
+                    animationChangeBottom[card] = -1;
+                    makeSmallerBottom[card] = 1;
+                  }
+                  else 
+                  {
+                    animationChangeBottom[card] = 0;
+                    makeSmallerBottom[card] = 0;
+                    animationFinishedBottom[card] = 1;
+                  }
+                }
+              }
+            }
+          }
+        }
+
+
+        for (card in cardsTop)
+          if (makeSmallerTop[card] == 1 && makeBiggerTop[card] == 1)
+            makeSmallerTop[card] = 0;
+
+        for (card in cardsTop)
+        { 
+          if (animationChangeTop[card] != 0)
+          {
+            if (makeSmallerTop[card] == 1)
+            {
+              if (cardsTop[card].width < cardWidth/2 && card > 0 && animationChangeTop[card] == 1)
+                animationChangeTop[parseInt(card)-1] =1;
+              if (cardsTop[card].width > 2+scaledDelta)
+                cardsTop[card].width -= scaledDelta
+              else 
+              {
+                makeSmallerTop[card] = 0;
+                makeBiggerTop[card] = 1;
+                if (animationChangeTop[card] == 1 && fancySwap == 1)
+                  cardsTop[card].texture = backTexture;
+                else
+                  cardsTop[card].texture = cardsSpritesheet.textures[handsTop[position][card].cardnameT+".png"];
+              }
+            }
+            if (makeBiggerTop[card] == 1)
+            {
+              if (cardsTop[card].width < cardWidth)
+                cardsTop[card].width += scaledDelta;
+              else 
+              {
+                makeBiggerTop[card] = 0;
+                if (animationChangeTop[card] == -1) 
+                  animationChangeTop[card] = 0;
+                
+                if (animationChangeTop[card] == 1) 
+                {
+                  if (fancySwap == 1)
+                  {
+                    animationChangeTop[card] = -1;
+                    makeSmallerTop[card] = 1;
+                  }
+                  else 
+                  {
+                    animationChangeTop[card] = 0;
+                    makeSmallerTop[card] = 0;
+                    animationFinishedTop[card] = 1;
+                  }
+                }
+              }
+            }
+          }
+      }
+    };
+
+
+
+    function keyboard(value) {
+      let key = {};
+
+      key.value = value;
+      key.isDown = false;
+      key.isUp = true;
+      key.press = undefined;
+      key.release = undefined;
+
+      key.downHandler = event => {
+        if (event.key == key.value) {
+          if (key.isUp && key.press) key.press();
+          key.isDown = true;
+          key.isUp = false;
+
+          event.preventDefault();
+        }
+      };
+      
+      key.upHandler = event => {
+        if (event.key == key.value) {
+          if (key.isDown && key.release) key.release();
+
+          key.isDown = false;
+          key.isUp = true;
+          event.preventDefault();
+        }
+      };
+
+      const downListener = key.downHandler.bind(key);
+      const upListener = key.upHandler.bind(key);
+
+      window.addEventListener("keydown", downListener, false);
+      window.addEventListener("keyup", upListener, false);
+
+      key.unsubscribe = () => {
+        window.removeEventListener("keydown", downListener);
+        window.removeEventListener("keyup", upListener);
+      };
+
+      return key
+    }
+
+  </script>
+</body>
+</html>

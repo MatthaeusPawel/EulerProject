@@ -1,0 +1,189 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Euler Project 54</title>
+</head>
+  <script src="../Library/PixiJS/pixi.js"></script>
+<body>
+  <script type="text/javascript">
+    let type = "WebGL"
+    if(!PIXI.utils.isWebGLSupported()){
+      type = "canvas"
+    }
+
+    let canvasHeight = 1280;
+    let canvasWidth = 1600;
+    
+    let animationIsStarted = 1;
+
+
+    let app = new PIXI.Application({
+      width: canvasWidth,
+      height: canvasHeight,
+      antialias: true,
+      resolution: 1
+    });
+    let cardBoard = new PIXI.Container();    
+    
+    cardBoard.x = 0;
+    cardBoard.y = 0;
+    cardBoard.height = canvasHeight;
+    cardBoard.Width = canvasWidth;
+
+    app.stage.addChild(cardBoard);
+
+    document.body.appendChild(app.view);
+
+    let style = new PIXI.TextStyle({
+      fontSize: 72,
+      fill: "white"
+    });
+
+    let loader = PIXI.Loader.shared
+
+
+    let topArray = []
+    let bottomArray = []
+    let finalArray = []
+    let plusSign;
+
+    let firstNumberX = 40;
+    let firstNumberY = 20;
+    let distanceNumbersHorizontal = 15;
+    let distanceNumbersVertical = 25;
+    
+    let myTextStyle = {fontFamily : 'Arial', fontSize: 24, fill :0xFFFFFF, align: 'left'}
+
+    let number = 123;
+
+    loader.load(mainSetup)
+
+    function reverseNumber(_number){
+      return parseInt(_number.toString().split("").reverse().join(""));
+
+    }
+    function mainSetup() {
+
+
+      let up = keyboard("ArrowUp");
+      let down = keyboard("ArrowDown");
+
+      let left = keyboard("ArrowLeft");
+      let right = keyboard("ArrowRight");
+
+      up.press = () => {}
+      down.press = () => {}
+
+      left.press = () => {}
+      right.press = () => {}
+
+
+
+      app.ticker.add(delta => gameLoop(delta));
+
+      scoreSetup();
+    };
+
+    function scoreSetup(){
+      
+      plusSign = new PIXI.Text('', myTextStyle)
+      plusSign.x = distanceNumbersHorizontal;
+      plusSign.y = firstNumberY + distanceNumbersVertical;
+      plusSign.text = "+"
+
+      cardBoard.addChild(plusSign);
+
+      for (i in number.toString().split("")) {
+        topArray[i] = new PIXI.Text('', myTextStyle)
+        topArray[i].x = firstNumberX + distanceNumbersHorizontal*i;
+        topArray[i].y = firstNumberY;
+        topArray[i].text = number.toString().split("")[i]
+
+        cardBoard.addChild(topArray[i]);
+
+        bottomArray[i] = new PIXI.Text('', myTextStyle)
+        bottomArray[i].x = firstNumberX + distanceNumbersHorizontal*i
+        bottomArray[i].y = firstNumberY + distanceNumbersVertical 
+        bottomArray[i].text = number.toString().split("").reverse().join("")[i]
+
+        cardBoard.addChild(bottomArray[i]);
+      }
+
+      for (i in (number+reverseNumber(number)).toString().split("")) {
+        finalArray[i] = new PIXI.Text('', myTextStyle)
+        finalArray[i].x = firstNumberX + distanceNumbersHorizontal*(i - (number+reverseNumber(number)).toString().split("").length + number.toString().split("").length );
+        finalArray[i].y = 2*2*firstNumberY;
+        finalArray[i].text = (number+reverseNumber(number)).toString().split("")[i]
+
+        cardBoard.addChild(finalArray[i]);
+
+      }
+    }
+    let animationFinishedBottom = [1,1,1,1,1];
+    let animationFinishedTop = [1,1,1,1,1];
+
+    function topAnimation(textobject){
+     textobject.style.fill = 0x00FF00;
+    }
+
+
+    function gameLoop(delta) {
+      if (animationIsStarted ==  1){
+        animationIsStarted = 0;
+
+        for (i in topArray){
+          window.setTimeout( i => topAnimation(topArray[i]), parseInt(i) * 10)
+
+        }
+      }
+    };
+
+
+
+    function keyboard(value) {
+      let key = {};
+
+      key.value = value;
+      key.isDown = false;
+      key.isUp = true;
+      key.press = undefined;
+      key.release = undefined;
+
+      key.downHandler = event => {
+        if (event.key == key.value) {
+          if (key.isUp && key.press) key.press();
+          key.isDown = true;
+          key.isUp = false;
+
+          event.preventDefault();
+        }
+      };
+     
+      key.upHandler = event => {
+        if (event.key == key.value) {
+          if (key.isDown && key.release) key.release();
+
+          key.isDown = false;
+          key.isUp = true;
+          event.preventDefault();
+        }
+      };
+
+      const downListener = key.downHandler.bind(key);
+      const upListener = key.upHandler.bind(key);
+
+      window.addEventListener("keydown", downListener, false);
+      window.addEventListener("keyup", upListener, false);
+
+      key.unsubscribe = () => {
+        window.removeEventListener("keydown", downListener);
+        window.removeEventListener("keyup", upListener);
+      };
+
+      return key
+    }
+
+  </script>
+</body>
+</html>

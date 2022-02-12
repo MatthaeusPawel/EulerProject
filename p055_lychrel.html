@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Euler Project 55</title>
+  <link rel="stylesheet" href ="mystyle.css">
+</head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/2.0.2/anime.min.js"></script>
+<body>
+<style>
+div {
+  width: 100px;
+  height: 100px;
+  background: grey;
+  position: relative;
+  animation: mymove 1s infinite;
+  animation-direction: alternate-reverse;
+};
+.mysty {
+  background: blue;
+  <!--animation: mymove 1s infinite;-->
+  <!--animation-direction: alternate-reverse;-->
+}
+@keyframes mymove {
+  from {top: 0px;}
+  to {top: 200px;}
+  }
+
+</style>
+
+
+<div>478</div>
+
+  <table align="right" style="width:100%" >
+    <tr>
+      <td>  555</td>
+      <td class="mysty">123</td>
+    </tr>
+    <tr>
+      <td>+ </td>
+      <td class="ml3">456</td>
+    </tr>
+</table>
+
+
+  <script type="text/javascript">
+    // Wrap every letter in a span
+      for (textWrapper of document.querySelectorAll('.ml2')){
+    textWrapper.innerHTML = textWrapper.textContent.replace(/\S/g, "<span class='letter'>$&</span>");
+
+    <!--anime.timeline({loop: false})-->
+      <!--.add({-->
+        <!--targets: '.ml2 .letter',-->
+        <!--scale: [10,1],-->
+        <!--opacity: [0,1],-->
+        <!--translateZ: 0,-->
+        <!--easing: "easeOutExpo",-->
+        <!--duration: 950,-->
+        <!--delay: (el, i) => 700*i-->
+      <!--})-->
+          <!--.add({-->
+        <!--targets: '.ml2',-->
+        <!--opacity: 0,-->
+        <!--duration: 1000,-->
+        <!--easing: "easeOutExpo",-->
+        <!--delay: 1000-->
+      <!--});-->
+      <!--}-->
+  </script>
+</body>
+</html>
